@@ -13,7 +13,7 @@ export default function Deals() {
   const items = menu.length ? menu : sampleMenu;
   const [tab, setTab] = useState("active");
   const [open, setOpen] = useState(false);
-  const [submitError, setSubmitError] = useState(""); // State added to handle errors properly
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({
     item_ids: [],
     discount_type: "flat",
@@ -36,7 +36,7 @@ export default function Deals() {
 
   const save = async (e) => {
     e.preventDefault();
-    setSubmitError(""); // Clear previous errors on new submission
+    setSubmitError("");
 
     if (!supabaseConfigured) {
       setSubmitError("Error: Connect Supabase first.");
@@ -73,8 +73,16 @@ export default function Deals() {
         return;
       }
 
-      // Reset form and close modal on success
+      // Reset form fields, clear errors, and close modal on successful insert
       setSubmitError("");
+      setForm({
+        item_ids: [],
+        discount_type: "flat",
+        discount_value: "",
+        start_time: "",
+        end_time: "",
+        banner_url: "",
+      });
       setOpen(false);
 
     } catch (err) {
@@ -226,18 +234,17 @@ export default function Deals() {
             <input className="input file-input" name="banner" type="file" accept="image/*" />
           </label>
 
-          {/* This block renders the error on the screen if submission fails */}
           {submitError && (
             <div style={{ color: "red", fontSize: "14px", fontWeight: "600", marginTop: "10px" }}>
               {submitError}
             </div>
           )}
 
-          <button className="btn primary w-full" disabled={!form.item_ids.length}>
+          <button className="btn primary w-0.5 w-full" disabled={!form.item_ids.length}>
             Launch flash deal
           </button>
         </form>
       </Modal>
     </div>
   );
-}
+                                          }
