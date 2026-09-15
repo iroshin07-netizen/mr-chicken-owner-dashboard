@@ -16,7 +16,8 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --no-package-lock  # <--- Bas ye add karna hai
+
 
       - name: Build React App (For Android)
         # Android ke liye base path '/' hona chahiye, Github pages wala nahi
