@@ -1,7 +1,10 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main  # Ab jaise hi tum naya code save/commit karoge, ye apne aap chal jayega
+  workflow_dispatch: # Button wala option backup ke liye rakh liya hai, in case kabhi zaroorat pade
 
 jobs:
   build-apk:
