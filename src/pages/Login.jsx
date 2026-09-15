@@ -1,0 +1,11 @@
+import {useState} from "react";
+import {LockKeyhole, Mail, ArrowRight} from "lucide-react";
+import {useAuth} from "../context/AuthContext";
+export default function Login() {
+ const {signIn,supabaseConfigured}=useAuth(); const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [error,setError]=useState(""); const [busy,setBusy]=useState(false);
+ const submit=async e=>{e.preventDefault();setError("");setBusy(true);const {error}=await signIn(email,password);if(error)setError(error.message);setBusy(false)};
+ return <main className="login-page"><div className="login-card"><div className="mb-8"><div className="flex justify-center mb-5"><div className="logo-mark large"><span>MC</span></div></div><h1 className="font-heading text-3xl font-bold text-center">Welcome back.</h1><p className="text-center text-gray-500 mt-2">Run Mr. Chicken from one place.</p></div>
+ {!supabaseConfigured&&<div className="demo-note"><b>Preview mode</b><br/>Add Supabase keys to .env to enable owner login and live data.</div>}
+ <form onSubmit={submit} className="space-y-4"><label className="field-label">Email<div className="input-wrap"><Mail size={17}/><input required type="email" placeholder="owner@mrchicken.in" value={email} onChange={e=>setEmail(e.target.value)}/></div></label><label className="field-label">Password<div className="input-wrap"><LockKeyhole size={17}/><input required type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)}/></div></label>{error&&<p className="error-text">{error}</p>}<button className="btn primary w-full mt-2" disabled={busy}>{busy?"Signing in…":"Sign in"}<ArrowRight size={18}/></button></form>
+ </div><div className="login-side"><div className="fried-art">🍗</div><p className="font-heading text-4xl font-bold">Crispy business.<br/>Clean control.</p><p className="mt-4 text-white/75 max-w-sm">Real-time orders, menu control and flash deals — designed around how a busy chicken brand actually runs.</p></div></main>
+}

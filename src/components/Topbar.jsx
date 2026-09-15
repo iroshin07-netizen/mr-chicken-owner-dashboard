@@ -1,0 +1,4 @@
+import { Bell, Search, Menu } from "lucide-react";
+export default function Topbar({title,onMenu}) {
+ return <header className="topbar"><div className="flex items-center gap-3"><button onClick={onMenu} className="mobile-menu"><Menu size={21}/></button><div><h1 className="font-heading text-xl md:text-2xl font-bold">{title}</h1><p className="text-xs text-gray-500 mt-0.5">Live business overview</p></div></div><div className="flex items-center gap-2"><button className="top-icon"><Search size={18}/></button><button className="top-icon relative"><Bell size={18}/><span className="notification-dot"/></button><div className="avatar">IR</div></div></header>
+}

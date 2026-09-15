@@ -1,0 +1,2 @@
+const labels={preparing:"Preparing",picked_up:"Picked Up",delivered:"Delivered",cancelled:"Cancelled"};
+export default function StatusBadge({status}) { return <span className={`status ${status}`}>{labels[status]||status}</span> }
