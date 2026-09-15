@@ -26,8 +26,9 @@ jobs:
 
       - name: Setup Capacitor (Web to Native)
         run: |
-          npm install @capacitor/core @capacitor/android --no-package-lock
+          npm install @capacitor/cli @capacitor/core @capacitor/android --no-package-lock
           npx cap init "Owner Dashboard" "com.mrchicken.ownerdashboard" --web-dir dist
+          
 
       - name: Add Android Platform
         run: npx cap add android
