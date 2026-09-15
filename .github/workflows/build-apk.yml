@@ -1,0 +1,51 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch: # Isse tum jab chaho tab manual button dabakar APK bana sakte ho
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build React App (For Android)
+        # Android ke liye base path '/' hona chahiye, Github pages wala nahi
+        run: npx vite build --base=/
+
+      - name: Setup Capacitor (Web to Native)
+        run: |
+          npm install @capacitor/core @capacitor/android
+          npm install -D @capacitor/cli
+          npx cap init "Owner Dashboard" "com.mrchicken.ownerdashboard" --web-dir dist
+
+      - name: Add Android Platform
+        run: npx cap add android
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build The APK File
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload The APK for Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mr-Chicken-Owner-Dashboard-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
