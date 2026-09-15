@@ -16,17 +16,16 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: npm install --no-package-lock  # <--- Bas ye add karna hai
-
+        run: npm install --no-package-lock
 
       - name: Build React App (For Android)
-        # Android ke liye base path '/' hona chahiye, Github pages wala nahi
+        # Android ke liye base path '/' hona chahiye
         run: npx vite build --base=/
 
       - name: Setup Capacitor (Web to Native)
         run: |
-          npm install @capacitor/core @capacitor/android
-          npm install -D @capacitor/cli
+          npm install @capacitor/core @capacitor/android --no-package-lock
+          npm install -D @capacitor/cli --no-package-lock
           npx cap init "Owner Dashboard" "com.mrchicken.ownerdashboard" --web-dir dist
 
       - name: Add Android Platform
@@ -48,5 +47,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Mr-Chicken-Owner-Dashboard-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk  
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           
