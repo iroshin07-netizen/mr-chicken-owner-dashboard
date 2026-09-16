@@ -1,11 +1,116 @@
-import {useState} from "react"; import {Plus,Search,Edit3,Trash2,ImagePlus} from "lucide-react"; import {supabase,supabaseConfigured,MENU_BUCKET} from "../lib/supabase"; import {sampleMenu} from "../data/sampleData"; import {useRealtimeTable} from "../hooks/useRealtimeTable"; import {money} from "../utils/format"; import Modal from "../components/Modal";
-const cats=["Burgers","Zinger","Wraps","Fries","Chicken Strips","Momos","Combos","Fried Chicken"];
-export default function MenuStudio(){const {rows}=useRealtimeTable("menu_items",sampleMenu);const menu=rows.length?rows:sampleMenu;const [search,setSearch]=useState("");const [open,setOpen]=useState(false);const [editing,setEditing]=useState(null);const [form,setForm]=useState({name:"",price:"",category:"Burgers",description:"",is_available:true,image_url:""});const filtered=menu.filter(x=>x.name.toLowerCase().includes(search.toLowerCase()));
- const reset=()=>{setForm({name:"",price:"",category:"Burgers",description:"",is_available:true,image_url:""});setEditing(null);};
- const save=async e=>{e.preventDefault();if(!supabaseConfigured)return alert("Connect Supabase first. Preview data is read-only.");let image=form.image_url;const file=e.target.image.files[0];if(file){const path=`${Date.now()}-${file.name.replace(/\\s+/g,"-")}`;const {error}=await supabase.storage.from(MENU_BUCKET).upload(path,file);if(error)return alert(error.message);image=supabase.storage.from(MENU_BUCKET).getPublicUrl(path).data.publicUrl}const payload={...form,price:Number(form.price),image_url:image||null};if(editing)await supabase.from("menu_items").update(payload).eq("id",editing);else await supabase.from("menu_items").insert(payload);setOpen(false);reset();};
- const toggle=async item=>{if(supabaseConfigured)await supabase.from("menu_items").update({is_available:!item.is_available}).eq("id",item.id)}; const del=async id=>{if(confirm("Delete this menu item?")&&supabaseConfigured)await supabase.from("menu_items").delete().eq("id",id)};
- return <div className="space-y-6"><div className="page-actions"><div><h2 className="section-title text-2xl">Menu Studio</h2><p className="muted mt-1">Make your customer menu match the kitchen.</p></div><div className="flex gap-2"><div className="search-box"><Search size={17}/><input placeholder="Search menu…" value={search} onChange={e=>setSearch(e.target.value)}/></div><button className="btn primary" onClick={()=>{reset();setOpen(true)}}><Plus size={18}/> Add New Item</button></div></div>
- <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">{filtered.map(item=><article className="menu-card" key={item.id}><div className="menu-photo"><img src={item.image_url} alt={item.name}/><span className={`availability ${item.is_available?"in":"out"}`}>{item.is_available?"In stock":"Out of stock"}</span></div><div className="p-4"><div className="flex justify-between gap-3"><div><p className="text-xs text-gray-500">{item.category}</p><h3 className="font-heading font-bold text-lg mt-1">{item.name}</h3></div><p className="font-heading font-bold text-lg">{money(item.price)}</p></div><p className="text-sm text-gray-500 mt-2 line-clamp-2">{item.description}</p><div className="flex items-center justify-between mt-5"><button className={`switch ${item.is_available?"on":""}`} onClick={()=>toggle(item)}><span/></button><div className="flex gap-1"><button className="action-btn" onClick={()=>{setEditing(item.id);setForm({name:item.name,price:item.price,category:item.category,description:item.description||"",is_available:item.is_available,image_url:item.image_url||""});setOpen(true)}}><Edit3 size={16}/></button><button className="action-btn danger" onClick={()=>del(item.id)}><Trash2 size={16}/></button></div></div></div></article>)}</div>
- <Modal open={open} onClose={()=>{setOpen(false);reset()}} title={editing?"Edit menu item":"Add new menu item"}><form onSubmit={save} className="space-y-4"><label className="field-label">Item name<input className="input" required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="e.g. Zinger Burger"/></label><div className="grid sm:grid-cols-2 gap-4"><label className="field-label">Price<input className="input" required type="number" min="0" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} placeholder="179"/></label><label className="field-label">Category<select className="input" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}>{cats.map(c=><option key={c}>{c}</option>)}</select></label></div><label className="field-label">Description<textarea className="input min-h-24" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="Short, appetizing description"/></label><label className="field-label">Image<input className="input file-input" type="file" name="image" accept="image/*"/><span className="help"><ImagePlus size={14}/> Stored in Supabase Storage</span></label><div className="flex items-center justify-between p-4 rounded-2xl bg-chicken-cream"><div><p className="font-medium text-sm">Available for customers</p><p className="text-xs text-gray-500">Turn off when the kitchen is out.</p></div><button type="button" className={`switch ${form.is_available?"on":""}`} onClick={()=>setForm({...form,is_available:!form.is_available})}><span/></button></div><button className="btn primary w-full">{editing?"Save changes":"Create item"}</button></form></Modal>
- </div>
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
+
+export default function MenuStudio() {
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    fetchMenuItems();
+  }, []);
+
+  const fetchMenuItems = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setMenuItems(data || []);
+    } catch (error) {
+      console.error("Error fetching menu:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredItems = menuItems.filter(item => 
+    item.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="pb-24 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="mb-4 mt-4 px-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Menu Studio</h1>
+        <p className="text-sm text-gray-500">Make your customer menu match the kitchen.</p>
+      </div>
+
+      {/* Top Bar (Search & Add) */}
+      <div className="px-4 flex gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input 
+            type="text" 
+            placeholder="Search menu..." 
+            className="w-full bg-gray-100 border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-red-500 outline-none"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm flex items-center gap-2 text-sm whitespace-nowrap">
+          <Plus size={18} /> Add New Item
+        </button>
+      </div>
+
+      {/* 🔴 NEW 2-COLUMN GRID LAYOUT FOR MENU 🔴 */}
+      {loading ? (
+        <p className="px-4 text-gray-500">Loading menu...</p>
+      ) : (
+        <div className="px-4 grid grid-cols-2 gap-3">
+          {filteredItems.map((item) => (
+            <div key={item.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+              
+              {/* Image (Square) */}
+              <div className="aspect-square w-full bg-gray-100 relative">
+                {item.image_url ? (
+                  <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                )}
+                
+                {/* Stock Badge */}
+                {item.in_stock !== false && (
+                  <span className="absolute top-2 right-2 bg-white text-green-700 text-[9px] font-bold px-2 py-0.5 rounded-md shadow-sm border border-green-100">
+                    In stock
+                  </span>
+                )}
+              </div>
+
+              {/* Item Details */}
+              <div className="p-3 flex flex-col flex-1">
+                <div className="flex justify-between items-start mb-1 gap-2">
+                  <div className="flex-1">
+                    <p className="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">{item.category || "General"}</p>
+                    <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2">{item.name}</h3>
+                  </div>
+                  <span className="font-black text-gray-900 text-sm">₹{item.price}</span>
+                </div>
+                
+                <p className="text-[10px] text-gray-500 line-clamp-1 mb-2">{item.description}</p>
+                
+                {/* Bottom Actions */}
+                <div className="mt-auto flex justify-between items-center pt-2 border-t border-gray-50">
+                  {/* Custom Toggle Switch */}
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" defaultChecked={item.in_stock !== false} />
+                    <div className="w-8 h-4.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-green-500"></div>
+                  </label>
+
+                  <div className="flex gap-1">
+                    <button className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">
+                      <Edit2 size={14} />
+                    </button>
+                    <button className="p-1.5 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
