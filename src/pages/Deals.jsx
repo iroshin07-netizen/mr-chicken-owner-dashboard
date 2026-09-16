@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabase'; // Make sure path is correct
+import { supabase } from '../lib/supabase'; // Make sure path is correct
 import { Clock, Trash2, Plus, Tag } from 'lucide-react';
 
 export default function Deals() {
